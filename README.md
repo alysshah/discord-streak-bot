@@ -19,12 +19,12 @@ This bot was created to automate streak tracking for UMD Womxn's Club Ultimate's
 The bot uses the `sk.` prefix for commands. Here’s what it supports:
 |         **Command**        |                             **Description**                             |
 |----------------------------|-------------------------------------------------------------------------|
-| `sk.log`                   | Logs a daily contribution with an image attachment.                     |
-| `sk.streak`                | Displays the current streak count and its start date.                   |
-| `sk.leaderboard`           | Shows the top 10 contributors ranked by total contributions.            |
-| `sk.stats [user]`          | Displays stats for a specific user or yourself if no user is mentioned. |
-| `sk.remindertime`          | Displays the current reminder time stored in the Google Sheet.          |
-| `sk.setremindertime HH:MM` | Updates the reminder time in the Google Sheet (24-hour format).         |
+| `sk.log`                   | Logs a daily contribution with an image attachment                     |
+| `sk.streak`                | Displays the current streak count and its start date                   |
+| `sk.leaderboard`           | Shows the top 10 contributors ranked by total contributions            |
+| `sk.stats [user]`          | Displays stats for a specific user or yourself if no user is mentioned |
+| `sk.remindertime`          | Displays the current reminder time stored in the Google Sheet (note: reminder functionality is not actively used in this bot)         |
+| `sk.setremindertime HH:MM` | Updates the reminder time in the Google Sheet (24-hour format; note: reminder functionality is not actively used in this bot)        |
 
 ## Building StreakKeeper
 

@@ -24,11 +24,17 @@ bot = commands.Bot(command_prefix=BOT_PREFIX, intents=intents)
 
 # set up Google Sheets API credentials
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-CREDS_FILE = "credentials.json"  # path to service account file
-SHEET_NAME = "UMD Womxn's Club Ultimate Throwing Streak" 
+SHEET_NAME = "UMD Womxn's Club Ultimate Throwing Streak"
 
-# authorize and connect to the sheet
-creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, SCOPE)
+# load Google credentials from environment variable
+import json
+google_credentials = os.getenv("GOOGLE_CREDENTIALS")
+if not google_credentials:
+    raise ValueError("Google credentials not set in environment variables.")
+
+# parse the credentials and authenticate
+creds_dict = json.loads(google_credentials)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, SCOPE)
 client = gspread.authorize(creds)
 
 # open the google sheet by its name

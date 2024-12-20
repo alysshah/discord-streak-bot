@@ -118,7 +118,7 @@ def check_user_log_today(user_id):
 ###### SEND REMINDER ##################
 
 @tasks.loop(minutes=1)  # check every minute
-async def check_reminder():
+async def check_reminder(): 
     """Background task to check and send reminders."""
     streak_data = load_streak_data()
     reminder_time = streak_data.get("reminder_time", "N/A")
@@ -128,6 +128,7 @@ async def check_reminder():
 
     # get current time in HH:MM format
     now = datetime.now().strftime("%H:%M")
+    print(now)
 
     # if the current time matches the reminder time
     if now == reminder_time:
@@ -322,8 +323,6 @@ async def leaderboard(ctx):
 
     for rank, user in enumerate(sorted_users, start=1):
         embed.add_field(name=f"{rank}. {user['Username']}", value=f"{user['Contributions']} contributions", inline=False)
-
-    embed.set_footer(text="We sow consistency 💦🧑‍🌾, we reap growth 🌱📈!\nDon’t let the streak wither 👀🌽")
 
     await ctx.send(embed=embed)
 

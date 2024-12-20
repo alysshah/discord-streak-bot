@@ -15,7 +15,7 @@ BOT_PREFIX = "sk."
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # specify the channel ID for reminders
-CHANNEL_ID = 1313197151739842596
+#CHANNEL_ID = 1313197151739842596
 # specify local time zone
 LOCAL_TIMEZONE = pytz.timezone("America/New_York")
 
@@ -120,30 +120,30 @@ def check_user_log_today(user_id):
 
 ###### SEND REMINDER ##################
 
-@tasks.loop(minutes=1)  # check every minute
-async def check_reminder(): 
-    """Background task to check and send reminders."""
-    streak_data = load_streak_data()
-    reminder_time = streak_data.get("reminder_time", "N/A")
+# @tasks.loop(minutes=1)  # check every minute
+# async def check_reminder(): 
+#     """Background task to check and send reminders."""
+#     streak_data = load_streak_data()
+#     reminder_time = streak_data.get("reminder_time", "N/A")
 
-    if reminder_time == "N/A":
-        return  # no reminder time set
+#     if reminder_time == "N/A":
+#         return  # no reminder time set
     
-    # get current local time in HH:MM format
-    now = datetime.now(LOCAL_TIMEZONE).strftime("%H:%M")
+#     # get current local time in HH:MM format
+#     now = datetime.now(LOCAL_TIMEZONE).strftime("%H:%M")
 
-    # if the current time matches the reminder time
-    if now == reminder_time:
-        today = str(date.today())
-        last_logged_date = streak_data.get("last_logged_date", "N/A")
+#     # if the current time matches the reminder time
+#     if now == reminder_time:
+#         today = str(date.today())
+#         last_logged_date = streak_data.get("last_logged_date", "N/A")
 
-        # check if no contributions have been made today
-        if last_logged_date != today:
-            channel = bot.get_channel(CHANNEL_ID)
-            if channel:
-                await channel.send(
-                    "🌟 **Reminder:** Don't forget to log a contribution today!"
-                )
+#         # check if no contributions have been made today
+#         if last_logged_date != today:
+#             channel = bot.get_channel(CHANNEL_ID)
+#             if channel:
+#                 await channel.send(
+#                     "🌟 **Reminder:** Don't forget to log a contribution today!"
+#                 )
 
 
 ###### BOT EVENT ##################
@@ -152,12 +152,12 @@ async def check_reminder():
 async def on_ready():
     print("StreakKeeper is ready!")
     # channel validation and reminder check start
-    channel = bot.get_channel(CHANNEL_ID)
-    if channel is None:
-        print(f"Error: Channel ID {CHANNEL_ID} not found or bot lacks access.")
-    else:
-        if not check_reminder.is_running():
-            check_reminder.start()
+    # channel = bot.get_channel(CHANNEL_ID)
+    # if channel is None:
+    #     print(f"Error: Channel ID {CHANNEL_ID} not found or bot lacks access.")
+    # else:
+    #     if not check_reminder.is_running():
+    #         check_reminder.start()
 
 
 ###### REACTION TRACKING ##################

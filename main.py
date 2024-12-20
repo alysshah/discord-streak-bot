@@ -130,7 +130,7 @@ async def check_reminder():
         return  # no reminder time set
     
     # get current local time in HH:MM format
-    now = datetime.datetime.now(LOCAL_TIMEZONE).strftime("%H:%M")
+    now = datetime.now(LOCAL_TIMEZONE).strftime("%H:%M")
     print(now)
 
     # if the current time matches the reminder time

@@ -1,6 +1,7 @@
 import os
 import re
 from datetime import date, datetime
+import pytz  # for time zone handling
 
 import discord
 from discord.ext import commands, tasks
@@ -15,6 +16,8 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # specify the channel ID for reminders
 CHANNEL_ID = 1313285166973849631
+# specify local time zone
+LOCAL_TIMEZONE = pytz.timezone("America/New_York")
 
 # discord Bot Setup
 intents = discord.Intents.default()
@@ -125,9 +128,9 @@ async def check_reminder():
 
     if reminder_time == "N/A":
         return  # no reminder time set
-
-    # get current time in HH:MM format
-    now = datetime.now().strftime("%H:%M")
+    
+    # get current local time in HH:MM format
+    now = datetime.datetime.now(LOCAL_TIMEZONE).strftime("%H:%M")
     print(now)
 
     # if the current time matches the reminder time

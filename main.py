@@ -15,11 +15,11 @@ BOT_PREFIX = "sk."
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # specify the channel ID for reminders
-CHANNEL_ID = 1313285166973849631
+CHANNEL_ID = 1313197151739842596
 # specify local time zone
 LOCAL_TIMEZONE = pytz.timezone("America/New_York")
 
-# discord Bot Setup
+# discord bot setup
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix=BOT_PREFIX, intents=intents)
@@ -131,7 +131,6 @@ async def check_reminder():
     
     # get current local time in HH:MM format
     now = datetime.now(LOCAL_TIMEZONE).strftime("%H:%M")
-    print(now)
 
     # if the current time matches the reminder time
     if now == reminder_time:
@@ -309,15 +308,6 @@ async def leaderboard(ctx):
     if not top_contributors:
         await ctx.send("No contributions yet! Be the first to log a streak. 🌟")
         return
-    
-    # leaderboard_message = "**🏆 Leaderboard (Top 10 Contributors):**\n\n"
-    # for rank, user in enumerate(top_contributors, start=1):
-    #     username = user["Username"]
-    #     contributions = user["Contributions"]
-    #     leaderboard_message += f"{rank}. {username} - {contributions} contributions\n"
-
-    # # step 5: send the leaderboard message
-    # await ctx.send(leaderboard_message)
 
     embed = discord.Embed(
         title="🏆 Leaderboard (Top 10 Contributors)",

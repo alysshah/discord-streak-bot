@@ -103,7 +103,7 @@ def save_user_data(user_id, username, contributions, last_log):
 def check_user_log_today(user_id):
     """Check if a user has already logged today."""
     users = load_user_data()  # load all user records
-    today = str(date.today())  # get today's date as a string
+    today = str(datetime.now(LOCAL_TIMEZONE).date())  # get today's date as a string
 
     # loop through each user in the data
     for user in users:
@@ -134,7 +134,7 @@ async def check_reminder():
 
     # if the current time matches the reminder time
     if now == reminder_time:
-        today = str(date.today())
+        today = str(datetime.now(LOCAL_TIMEZONE).date())
         last_logged_date = streak_data.get("last_logged_date", "N/A")
         print(f"Today's date: {today}, Last logged date: {last_logged_date}")  # debugging
 
@@ -182,7 +182,7 @@ async def on_reaction_add(reaction, user):
 
     # step 3: check if the user has already contributed today
     user_id = str(user.id)
-    today = str(date.today())
+    today = str(datetime.now(LOCAL_TIMEZONE).date())
     if check_user_log_today(user_id):
         return # user already contributed today 
 
@@ -204,7 +204,7 @@ def check_milestone(streak_count, start_date):
     # month and year milestones
     if start_date != "N/A":
         start_date_obj = date.fromisoformat(start_date)
-        today = date.today()
+        today = datetime.now(LOCAL_TIMEZONE).date()
 
         # calculate the number of months and years passed
         total_months = (today.year - start_date_obj.year) * 12 + (today.month - start_date_obj.month)
@@ -231,7 +231,7 @@ async def log(ctx):
 
     # step 2: load current streak data
     streak_data = load_streak_data()
-    today = str(date.today())
+    today = str(datetime.now(LOCAL_TIMEZONE).date())
     last_logged_date = streak_data["last_logged_date"]
 
     # step 3: check if the user already contributed today
@@ -332,7 +332,7 @@ async def view_streak(ctx):
     start_date = streak_data["start_date"] if streak_data["start_date"] else "N/A"
     last_logged_date = streak_data["last_logged_date"]
 
-    today = date.today()
+    today = datetime.now(LOCAL_TIMEZONE).date()
 
     # check if the streak is broken
     if last_logged_date and last_logged_date != "N/A":

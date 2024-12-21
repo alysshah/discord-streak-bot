@@ -15,7 +15,7 @@ BOT_PREFIX = "sk."
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # specify the channel ID for reminders
-CHANNEL_ID = 1313240180995391498
+CHANNEL_ID = 1313197151739842596
 # specify local time zone
 LOCAL_TIMEZONE = pytz.timezone("America/New_York")
 
@@ -136,11 +136,9 @@ async def check_reminder():
     if now == reminder_time:
         today = str(datetime.now(LOCAL_TIMEZONE).date())
         last_logged_date = streak_data.get("last_logged_date", "N/A")
-        print(f"Today's date: {today}, Last logged date: {last_logged_date}")  # debugging
 
         # check if no contributions have been made today
         if last_logged_date != today:
-            print("dates not equal")
             channel = bot.get_channel(CHANNEL_ID)
             if channel:
                 await channel.send(

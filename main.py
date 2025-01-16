@@ -314,7 +314,7 @@ async def leaderboard(ctx):
         color=discord.Color.blue()
     )
 
-    for rank, user in enumerate(sorted_users, start=1):
+    for rank, user in enumerate(top_contributors, start=1):
         embed.add_field(name=f"{rank}. {user['Username']}", value=f"{user['Contributions']} contributions", inline=False)
 
     await ctx.send(embed=embed)

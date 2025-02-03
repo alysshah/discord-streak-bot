@@ -253,8 +253,7 @@ async def log(ctx):
         await ctx.send(f"🏆 **Last Recorded Leaderboard for {previous_month_name}**:")
         await leaderboard(ctx)  # calls the leaderboard function to print top contributors
 
-        # print leaderboard
-        sheet2.batch_clear(["A2:D1000"]) # reset leaderboard
+        sheet2.batch_clear(["A2:D1000"]) # reset leaderboard in google sheets
         await ctx.send(f"🌟 **New Leaderboard!** All contributions have been reset for {today.strftime('%B')}. This is your chance to make it to the top! 🔥")
 
     # step 4: check if the user already contributed today
@@ -313,6 +312,31 @@ async def log(ctx):
     # save the message ID for reaction tracking
     streak_data["log_message_id"] = confirmation_message.id
     save_streak_data(streak_data)
+
+
+###### MANUALLY RESET LEADERBOARD ##################
+
+ALLOWED_USERS = {722664432433627209}  # currently: Y
+
+@bot.command(name="resetleaderboard")
+async def reset_leaderboard(ctx):
+    """Manually resets the leaderboard and posts the last results (Only for approved users)."""
+    if ctx.author.id not in ALLOWED_USERS:
+        await ctx.send("🚫 You don’t have permission to reset the leaderboard.")
+        return
+
+    # load user data to check if there's anything to print
+    users = load_user_data()
+    if not users:  # if no user data exists, don't print an empty leaderboard
+        await ctx.send("⚠️ **Leaderboard is already empty. Nothing to reset.**")
+    else:
+        await ctx.send(f"🏆 **Last Recorded Leaderboard**:")
+        await leaderboard(ctx)  # calls the leaderboard function to print top contributors
+
+    sheet2.batch_clear(["A2:D1000"]) # reset leaderboard in google sheets
+    await ctx.send(f"🌟 **New Leaderboard!** All contributions have been reset for {datetime.now(LOCAL_TIMEZONE).date().strftime('%B')}. This is your chance to make it to the top! 🔥")
+
+    print("✅ Leaderboard has been reset manually.")
 
 
 ###### LEADERBOARD ##################

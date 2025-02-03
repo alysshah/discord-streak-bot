@@ -12,7 +12,7 @@ This bot was created to automate streak tracking for UMD Womxn's Club Ultimate's
 
 - **Daily Logging**: Log your contributions with a quick command or reaction.
 - **Reaction Tracking**: Keeps streak tracking flexible for group activities.
-- **Leaderboards**: Ranks contributors for a competitive, motivating aspect.
+- **Monthly Leaderboards**: Ranks contributors for a competitive, motivating aspect. Contributions reset at the start of each month, providing fresh competition.
 - **Milestone Celebrations**: Recognizes key achievements like streak length and anniversaries.
 - **User Stats**: Shows individual contributions and rank.
 - **Customizable Reminder Time**: Automatically reminds users to contribute at a specified time.
@@ -20,7 +20,7 @@ This bot was created to automate streak tracking for UMD Womxn's Club Ultimate's
 
 ### Commands
 
-The bot uses the `sk.` prefix for commands. Here’s what it supports:
+The bot uses the `sk.` (or `Sk.`) prefix for commands. Here’s what it supports:
 | **Command** | **Description** |
 |----------------------------|------------------------------------------------------------------------|
 | `sk.log` | Logs a daily contribution with an image attachment |
@@ -102,6 +102,20 @@ StreakKeeper is designed to be a versatile streak-tracking bot, but its function
    - As a competitive team, having a leaderboard adds a friendly, motivational element. It rewards consistency and encourages players to take initiative in contributing to the streak. This feature also allows for fun recognition moments, like shouting out the top contributors at meetings or in team discussions.
 3. **Multiple Logs per Day**:
    - Instead of restricting contributions to just one per day, I allowed for multiple logs. This ensures that additional efforts by teammates are recognized rather than ignored. It also helps maintain momentum, as seeing others contribute encourages participation.
+
+#### Monthly Leaderboard Reset
+
+At the start of each month, **all individual contributions reset to zero** to encourage fresh competition. When the first contribution of a new month is logged:
+
+1. The final leaderboard of the previous month is displayed in the channel.
+2. All contribution data is cleared, and the leaderboard starts fresh.
+3. The streak itself continues, but the leaderboard rankings reset.
+   This ensures that:
+
+- Everyone has an equal chance to rank highly each month.
+- The leaderboard remains active, even if some users fall behind.
+- Past efforts are acknowledged before resetting.
+  Since the streak itself does not reset, **milestones and overall streak tracking continue as usual**.
 
 #### Reminder Time
 

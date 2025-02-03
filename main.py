@@ -325,13 +325,8 @@ async def reset_leaderboard(ctx):
         await ctx.send("🚫 You don’t have permission to reset the leaderboard.")
         return
 
-    # load user data to check if there's anything to print
-    users = load_user_data()
-    if not users:  # if no user data exists, don't print an empty leaderboard
-        await ctx.send("⚠️ **Leaderboard is already empty. Nothing to reset.**")
-    else:
-        await ctx.send(f"🏆 **Last Recorded Leaderboard**:")
-        await leaderboard(ctx)  # calls the leaderboard function to print top contributors
+    await ctx.send(f"🏆 **Last Recorded Leaderboard**:")
+    await leaderboard(ctx)  # calls the leaderboard function to print top contributors
 
     sheet2.batch_clear(["A2:D1000"]) # reset leaderboard in google sheets
     await ctx.send(f"🌟 **New Leaderboard!** All contributions have been reset for {datetime.now(LOCAL_TIMEZONE).date().strftime('%B')}. This is your chance to make it to the top! 🔥")

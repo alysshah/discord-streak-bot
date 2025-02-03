@@ -110,7 +110,8 @@ At the start of each month, **all individual contributions reset to zero** to en
 1. The final leaderboard of the previous month is displayed in the channel.
 2. All contribution data is cleared, and the leaderboard starts fresh.
 3. The streak itself continues, but the leaderboard rankings reset.
-   This ensures that:
+
+This ensures that:
 
 - Everyone has an equal chance to rank highly each month.
 - The leaderboard remains active, even if some users fall behind.

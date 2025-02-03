@@ -11,7 +11,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 # load environment variables
 load_dotenv()
-BOT_PREFIX = "sk."
+BOT_PREFIXES = ["sk.", "Sk."]
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # specify the channel ID for reminders
@@ -22,7 +22,7 @@ LOCAL_TIMEZONE = pytz.timezone("America/New_York")
 # discord bot setup
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix=BOT_PREFIX, intents=intents)
+bot = commands.Bot(command_prefix=commands.when_mentioned_or(*BOT_PREFIXES), intents=intents)
 
 
 ###### GOOGLE SHEETS SETUP ##################
@@ -229,48 +229,73 @@ async def log(ctx):
 
     # step 2: load current streak data
     streak_data = load_streak_data()
-    today = str(datetime.now(LOCAL_TIMEZONE).date())
+    today = datetime.now(LOCAL_TIMEZONE).date()
+    current_month = today.month
+    current_year = today.year
+    today_str = str(today)
     last_logged_date = streak_data["last_logged_date"]
 
-    # step 3: check if the user already contributed today
+    # error handling in case last logged date is N/A
+    try:
+        last_logged_date_obj = date.fromisoformat(last_logged_date)
+        last_logged_month = last_logged_date_obj.month
+        last_logged_year = last_logged_date_obj.year
+    except ValueError:
+        last_logged_month = None
+        last_logged_year = None
+
+    # step 3: check if a new month has started
+    if last_logged_month and (current_month != last_logged_month or current_year != last_logged_year):
+        # get the previous month's name
+        previous_month_name = today.replace(month=last_logged_month).strftime("%B")  # e.g., "January"
+
+        # print the previous month's leaderboard before reset
+        await ctx.send(f"🏆 **Last Recorded Leaderboard for {previous_month_name}**:")
+        await leaderboard(ctx)  # calls the leaderboard function to print top contributors
+
+        # print leaderboard
+        sheet2.batch_clear(["A2:D1000"]) # reset leaderboard
+        await ctx.send(f"🌟 **New Leaderboard!** All contributions have been reset for {today.strftime('%B')}. This is your chance to make it to the top! 🔥")
+
+    # step 4: check if the user already contributed today
     user_id = str(ctx.author.id)
     username = ctx.author.display_name
     if check_user_log_today(user_id):
         await ctx.send(f"You've already contributed today, {username}! See you tomorrow. 🌟")
         return
 
-    # step 4: update user contributions (first time today)
-    save_user_data(user_id, username, 1, today)
+    # step 5: update user contributions (first time today)
+    save_user_data(user_id, username, 1, today_str)
 
-    # step 5: prevent updating the streak if it's already logged today
-    if last_logged_date == today:
+    # step 6: prevent updating the streak if it's already logged today
+    if last_logged_date == today_str:
         await ctx.send("Thanks for contributing! The streak’s already logged for today. 🌟")
         return
 
-    # step 6: check if the streak is broken
+    # step 7: check if the streak is broken
     if last_logged_date and last_logged_date != "N/A":
         try:
             last_logged_date_obj = date.fromisoformat(last_logged_date)
-            days_difference = (date.fromisoformat(today) - last_logged_date_obj).days
+            days_difference = (date.fromisoformat(today_str) - last_logged_date_obj).days
 
             if days_difference > 1:  # streak is broken
                 streak_data["streak_count"] = 1
-                streak_data["start_date"] = today  # reset the streak start date
-                streak_data["last_logged_date"] = today
+                streak_data["start_date"] = today_str  # reset the streak start date
+                streak_data["last_logged_date"] = today_str
                 save_streak_data(streak_data)
                 await ctx.send("😢 The streak was broken! Starting fresh from today.")
                 return
         except ValueError: # handle invalid date formats (e.g., "N/A")
             streak_data["last_logged_date"] = None
 
-    # step 7: update the streak for the first log of the day
+    # step 8: update the streak for the first log of the day
     streak_data["streak_count"] += 1
-    streak_data["last_logged_date"] = today
+    streak_data["last_logged_date"] = today_str
     if streak_data["start_date"] == "N/A" or not streak_data["start_date"]:
-        streak_data["start_date"] = today  # set start date if missing
+        streak_data["start_date"] = today_str  # set start date if missing
     save_streak_data(streak_data)
 
-    # step 8: check for milestones
+    # step 9: check for milestones
     streak_count = streak_data["streak_count"]
     start_date = streak_data["start_date"]
 
@@ -279,7 +304,7 @@ async def log(ctx):
         milestone_message = "\n".join(milestones)
         await ctx.send(f"🎉 **Milestone reached!**\n{milestone_message}")
 
-    # step 9: post confirmation message and add emoji reaction
+    # step 10: post confirmation message and add emoji reaction
     confirmation_message = await ctx.send(
         f"✅ Entry logged! The streak is now **{streak_count} days** long! React with ➕ to contribute!"
     )
@@ -306,11 +331,11 @@ async def leaderboard(ctx):
     
     # step 4: format leaderboard message
     if not top_contributors:
-        await ctx.send("No contributions yet! Be the first to log a streak. 🌟")
+        await ctx.send("No contributions 😢")
         return
 
     embed = discord.Embed(
-        title="🏆 Leaderboard (Top 10 Contributors)",
+        title="Top 10 Contributors",
         color=discord.Color.blue()
     )
 
@@ -411,7 +436,7 @@ async def user_stats(ctx, *, member_input: str = None):
     if not user_data:
         embed = discord.Embed(
             title="📊 User Stats",
-            description=f"**{username}** hasn't contributed yet. Be the first to log a streak! 🌟",
+            description=f"**{username}** hasn't contributed yet this month.",
             color=discord.Color.yellow()
         )
         await ctx.send(embed=embed)

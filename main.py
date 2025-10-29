@@ -196,21 +196,32 @@ async def on_reaction_add(reaction, user):
     reaction_message_id = str(reaction.message.id)
     message_date = None
     
+    print(f"[REACTION] User: {user.display_name} (ID: {user.id}), Msg ID: {reaction_message_id}")
+    print(f"[REACTION] Sheet - Today: {streak_data.get('log_message_id_today')}, Yesterday: {streak_data.get('log_message_id_yesterday')}")
+    
     if streak_data.get("log_message_id_today") and reaction_message_id == streak_data["log_message_id_today"]:
         message_date = streak_data.get("log_message_date_today")
+        print(f"[REACTION] Matched TODAY's message, date: {message_date}")
     elif streak_data.get("log_message_id_yesterday") and reaction_message_id == streak_data["log_message_id_yesterday"]:
         message_date = streak_data.get("log_message_date_yesterday")
+        print(f"[REACTION] Matched YESTERDAY's message, date: {message_date}")
+    else:
+        print(f"[REACTION] NO MATCH - message not tracked")
     
     if not message_date or message_date == "N/A":
+        print(f"[REACTION] Invalid date ({message_date}), exiting")
         return # not a valid log message or no date stored
 
     # step 4: check if the user has already contributed on that date
     user_id = str(user.id)
     if check_user_log_on_date(user_id, message_date):
+        print(f"[REACTION] User already logged on {message_date}, skipping")
         return # user already contributed on this date
 
     # step 5: update user contributions with the message's date
+    print(f"[REACTION] Saving contribution for {user.display_name} on {message_date}")
     save_user_data(user_id, user.display_name, 1, message_date)
+    print(f"[REACTION] Save completed for {user.display_name}")
     # await reaction.message.channel.send(f"🎉 **{user.display_name}** has contributed for {message_date}!")
 
 

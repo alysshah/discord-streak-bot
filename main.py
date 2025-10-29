@@ -81,7 +81,7 @@ def load_streak_data():
 
 def save_streak_data(data):
     """Save streak data to Sheet1."""
-    sheet1.update('A2:J2', [[
+    sheet1.update([[
         data["streak_count"],
         data["start_date"],
         data["last_logged_date"],
@@ -92,7 +92,7 @@ def save_streak_data(data):
         data.get("log_message_date_yesterday", ""),
         data["longest_streak"],
         data["longest_streak_end_date"]
-    ]])
+    ]], 'A2:J2')
 
 def load_user_data():
     """Load all user contributions from Sheet2."""
@@ -107,7 +107,7 @@ def save_user_data(user_id, username, contributions, last_log):
         if str(user["User ID"]).strip() == str(user_id).strip():
             # update existing user data
             new_contributions = int(user["Contributions"]) + contributions
-            sheet2.update(f"B{i}:D{i}", [[username, new_contributions, last_log]])
+            sheet2.update([[username, new_contributions, last_log]], f"B{i}:D{i}")
             return
 
     # if user doesn't exist, append a new row

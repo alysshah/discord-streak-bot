@@ -25,6 +25,7 @@ The bot uses the `sk.` (or `Sk.`) prefix for commands. Here’s what it supports
 |----------------------------|------------------------------------------------------------------------|
 | `sk.log` | Logs a daily contribution with an image attachment |
 | `sk.streak` | Displays the current streak count and its start date |
+| `sk.longeststreak` | Displays the longest streak ever achieved and when it ended |
 | `sk.leaderboard` | Shows the top 10 contributors ranked by total contributions |
 | `sk.stats [user]` | Displays stats for a specific user or yourself if no user is mentioned |
 | `sk.remindertime` | Displays the current reminder time stored in the Google Sheet |

@@ -58,9 +58,12 @@ def load_streak_data():
     """Load streak data from Sheet1, handling empty values."""
     data = sheet1.row_values(2) # load row 2
 
-    # treat log_message_id as a string
-    log_message_id = data[4] if len(data) > 4 and data[4] else None
-    log_message_id = str(log_message_id) if log_message_id else None
+    # treat message IDs as strings
+    log_message_id_today = data[4] if len(data) > 4 and data[4] else None
+    log_message_id_today = str(log_message_id_today) if log_message_id_today else None
+    
+    log_message_id_yesterday = data[6] if len(data) > 6 and data[6] else None
+    log_message_id_yesterday = str(log_message_id_yesterday) if log_message_id_yesterday else None
 
     # safeguard for empty cells
     return {
@@ -68,17 +71,27 @@ def load_streak_data():
         "start_date": data[1] if len(data) > 1 and data[1] else "N/A",
         "last_logged_date": data[2] if len(data) > 2 and data[2] else "N/A",
         "reminder_time": data[3] if len(data) > 3 and data[3] else "N/A",
-        "log_message_id": log_message_id
+        "log_message_id_today": log_message_id_today,
+        "log_message_date_today": data[5] if len(data) > 5 and data[5] else "N/A",
+        "log_message_id_yesterday": log_message_id_yesterday,
+        "log_message_date_yesterday": data[7] if len(data) > 7 and data[7] else "N/A",
+        "longest_streak": int(data[8]) if len(data) > 8 and data[8].isdigit() else 0,
+        "longest_streak_end_date": data[9] if len(data) > 9 and data[9] else "N/A"
     }
 
 def save_streak_data(data):
     """Save streak data to Sheet1."""
-    sheet1.update('A2:E2', [[
+    sheet1.update('A2:J2', [[
         data["streak_count"],
         data["start_date"],
         data["last_logged_date"],
         data["reminder_time"],
-        str(data["log_message_id"])  # ensure it's saved as a string
+        str(data["log_message_id_today"]) if data.get("log_message_id_today") else "",
+        data.get("log_message_date_today", ""),
+        str(data["log_message_id_yesterday"]) if data.get("log_message_id_yesterday") else "",
+        data.get("log_message_date_yesterday", ""),
+        data["longest_streak"],
+        data["longest_streak_end_date"]
     ]])
 
 def load_user_data():
@@ -91,7 +104,7 @@ def save_user_data(user_id, username, contributions, last_log):
 
     # check if the user already exists
     for i, user in enumerate(users, start=2):  # row 2 onwards (after headers)
-        if str(user["User ID"]) == user_id:
+        if str(user["User ID"]).strip() == str(user_id).strip():
             # update existing user data
             new_contributions = int(user["Contributions"]) + contributions
             sheet2.update(f"B{i}:D{i}", [[username, new_contributions, last_log]])
@@ -102,20 +115,22 @@ def save_user_data(user_id, username, contributions, last_log):
 
 def check_user_log_today(user_id):
     """Check if a user has already logged today."""
+    today = str(datetime.now(LOCAL_TIMEZONE).date())
+    return check_user_log_on_date(user_id, today)
+
+def check_user_log_on_date(user_id, date_str):
+    """Check if a user has already logged on a specific date."""
     users = load_user_data()  # load all user records
-    today = str(datetime.now(LOCAL_TIMEZONE).date())  # get today's date as a string
 
     # loop through each user in the data
     for user in users:
         recorded_user_id = str(user["User ID"]).strip()
         last_log = str(user["Last Log"]).strip()
 
-        if recorded_user_id == user_id and last_log == today:
-            #print("User has already logged today!")
-            return True  # user already contributed today
+        if recorded_user_id == str(user_id).strip() and last_log == date_str:
+            return True  # user already contributed on this date
 
-    #print("User has not logged yet today.")
-    return False  # user has not contributed today
+    return False  # user has not contributed on this date
 
 
 ###### SEND REMINDER ##################
@@ -166,27 +181,37 @@ async def on_ready():
 async def on_reaction_add(reaction, user):
     """
     Track reactions on the streak log message.
-    Users can react with ➕ to gain a contribution once per day.
+    Users can react with ➕ to gain a contribution for the message's date.
     """
     # step 1: ignore bot reactions
     if user.bot:
         return
 
-    # step 2: verify message and emoji
+    # step 2: verify emoji
+    if reaction.emoji != "➕":
+        return
+
+    # step 3: check if reacting to today's or yesterday's log message
     streak_data = load_streak_data()
-    log_message_id = streak_data.get("log_message_id")
-    if not log_message_id or str(reaction.message.id) != str(log_message_id) or reaction.emoji != "➕":
-        return # ignore unmatched reactions
+    reaction_message_id = str(reaction.message.id)
+    message_date = None
+    
+    if streak_data.get("log_message_id_today") and reaction_message_id == streak_data["log_message_id_today"]:
+        message_date = streak_data.get("log_message_date_today")
+    elif streak_data.get("log_message_id_yesterday") and reaction_message_id == streak_data["log_message_id_yesterday"]:
+        message_date = streak_data.get("log_message_date_yesterday")
+    
+    if not message_date or message_date == "N/A":
+        return # not a valid log message or no date stored
 
-    # step 3: check if the user has already contributed today
+    # step 4: check if the user has already contributed on that date
     user_id = str(user.id)
-    today = str(datetime.now(LOCAL_TIMEZONE).date())
-    if check_user_log_today(user_id):
-        return # user already contributed today 
+    if check_user_log_on_date(user_id, message_date):
+        return # user already contributed on this date
 
-    # step 4: update user contributions
-    save_user_data(user_id, user.display_name, 1, today)
-    # await reaction.message.channel.send(f"🎉 **{username}** has contributed for today!")
+    # step 5: update user contributions with the message's date
+    save_user_data(user_id, user.display_name, 1, message_date)
+    # await reaction.message.channel.send(f"🎉 **{user.display_name}** has contributed for {message_date}!")
 
 
 ###### LOG STREAK ##################
@@ -272,27 +297,33 @@ async def log(ctx):
         return
 
     # step 7: check if the streak is broken
+    streak_was_broken = False
     if last_logged_date and last_logged_date != "N/A":
         try:
             last_logged_date_obj = date.fromisoformat(last_logged_date)
             days_difference = (date.fromisoformat(today_str) - last_logged_date_obj).days
 
             if days_difference > 1:  # streak is broken
+                # check if current streak is the longest
+                current_streak = streak_data["streak_count"]
+                if current_streak > streak_data["longest_streak"]:
+                    streak_data["longest_streak"] = current_streak
+                    streak_data["longest_streak_end_date"] = last_logged_date
+                
                 streak_data["streak_count"] = 1
                 streak_data["start_date"] = today_str  # reset the streak start date
                 streak_data["last_logged_date"] = today_str
-                save_streak_data(streak_data)
                 await ctx.send("😢 The streak was broken! Starting fresh from today.")
-                return
+                streak_was_broken = True
         except ValueError: # handle invalid date formats (e.g., "N/A")
             streak_data["last_logged_date"] = None
 
     # step 8: update the streak for the first log of the day
-    streak_data["streak_count"] += 1
-    streak_data["last_logged_date"] = today_str
-    if streak_data["start_date"] == "N/A" or not streak_data["start_date"]:
-        streak_data["start_date"] = today_str  # set start date if missing
-    save_streak_data(streak_data)
+    if not streak_was_broken: # (skip if already updated due to break)
+        streak_data["streak_count"] += 1
+        streak_data["last_logged_date"] = today_str
+        if streak_data["start_date"] == "N/A" or not streak_data["start_date"]:
+            streak_data["start_date"] = today_str  # set start date if missing
 
     # step 9: check for milestones
     streak_count = streak_data["streak_count"]
@@ -309,8 +340,11 @@ async def log(ctx):
     )
     await confirmation_message.add_reaction("➕")
 
-    # save the message ID for reaction tracking
-    streak_data["log_message_id"] = confirmation_message.id
+    # shift today's message to yesterday, save new message for today
+    streak_data["log_message_id_yesterday"] = streak_data.get("log_message_id_today")
+    streak_data["log_message_date_yesterday"] = streak_data.get("log_message_date_today")
+    streak_data["log_message_id_today"] = confirmation_message.id
+    streak_data["log_message_date_today"] = today_str
     save_streak_data(streak_data)
 
 
@@ -383,6 +417,11 @@ async def view_streak(ctx):
             days_difference = (today - last_logged_date_obj).days
 
             if days_difference > 1:  # streak is broken
+                # check if current streak is the longest
+                if streak_count > streak_data["longest_streak"]:
+                    streak_data["longest_streak"] = streak_count
+                    streak_data["longest_streak_end_date"] = last_logged_date
+                
                 streak_data["streak_count"] = 0
                 streak_data["last_logged_date"] = "N/A"
                 save_streak_data(streak_data)
@@ -393,6 +432,18 @@ async def view_streak(ctx):
 
     # display the streak
     await ctx.send(f"🔥 **Current Streak:** {streak_count} days\n📅 **Start Date:** {start_date}")
+
+@bot.command(name="longeststreak")
+async def view_longest_streak(ctx):
+    """View the longest streak record."""
+    streak_data = load_streak_data()
+    longest_streak = streak_data["longest_streak"]
+    longest_streak_end_date = streak_data["longest_streak_end_date"]
+    
+    if longest_streak == 0 or longest_streak_end_date == "N/A":
+        await ctx.send("🏆 **No streak record yet!** Keep logging to set a new record!")
+    else:
+        await ctx.send(f"🏆 **Longest Streak:** {longest_streak} days\n📅 **Ended:** {longest_streak_end_date}")
 
 @bot.command(name="remindertime")
 async def view_reminder_time(ctx):
@@ -449,7 +500,7 @@ async def user_stats(ctx, *, member_input: str = None):
     username = member.display_name
 
     # find user stats
-    user_data = next((user for user in users if str(user["User ID"]) == user_id), None)
+    user_data = next((user for user in users if str(user["User ID"]).strip() == str(user_id).strip()), None)
 
     # if user has no contributions
     if not user_data:
@@ -467,7 +518,7 @@ async def user_stats(ctx, *, member_input: str = None):
 
     # calculate user rank
     sorted_users = sorted(users, key=lambda x: int(x["Contributions"]), reverse=True)
-    rank = next((index + 1 for index, user in enumerate(sorted_users) if str(user["User ID"]) == user_id), "N/A")
+    rank = next((index + 1 for index, user in enumerate(sorted_users) if str(user["User ID"]).strip() == str(user_id).strip()), "N/A")
 
     # build and send the embed
     embed = discord.Embed(

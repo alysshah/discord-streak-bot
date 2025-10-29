@@ -81,6 +81,7 @@ def load_streak_data():
 
 def save_streak_data(data):
     """Save streak data to Sheet1."""
+    print(f"[SAVE_STREAK] Saving to Sheet1 - Count: {data['streak_count']}, Last: {data['last_logged_date']}")
     sheet1.update([[
         data["streak_count"],
         data["start_date"],
@@ -93,6 +94,7 @@ def save_streak_data(data):
         data["longest_streak"],
         data["longest_streak_end_date"]
     ]], 'A2:J2')
+    print(f"[SAVE_STREAK] Sheet1 update completed")
 
 def load_user_data():
     """Load all user contributions from Sheet2."""
@@ -101,17 +103,23 @@ def load_user_data():
 def save_user_data(user_id, username, contributions, last_log):
     """Save or update a user's contribution data. If user already exists, update their row. Else, append a new row."""
     users = load_user_data()
+    print(f"[SAVE_USER] Attempting to save: {username} (ID: {user_id}), +{contributions}, date: {last_log}")
 
     # check if the user already exists
     for i, user in enumerate(users, start=2):  # row 2 onwards (after headers)
         if str(user["User ID"]).strip() == str(user_id).strip():
             # update existing user data
-            new_contributions = int(user["Contributions"]) + contributions
+            old_contributions = int(user["Contributions"])
+            new_contributions = old_contributions + contributions
+            print(f"[SAVE_USER] Found user at row {i}, updating: {old_contributions} -> {new_contributions}")
             sheet2.update([[username, new_contributions, last_log]], f"B{i}:D{i}")
+            print(f"[SAVE_USER] Update completed for {username}")
             return
 
     # if user doesn't exist, append a new row
+    print(f"[SAVE_USER] User not found, appending new row for {username}")
     sheet2.append_row([user_id, username, contributions, last_log])
+    print(f"[SAVE_USER] Append completed for {username}")
 
 def check_user_log_today(user_id):
     """Check if a user has already logged today."""
@@ -258,6 +266,8 @@ def check_milestone(streak_count, start_date):
 @bot.command(name="log")
 async def log(ctx):
     """Log a streak for the day with an image attachment."""
+    print(f"[LOG] User {ctx.author.display_name} (ID: {ctx.author.id}) initiated log command")
+    
     # step 1: check if the message contains an image attachment
     if not ctx.message.attachments:
         await ctx.send("Did it even happen if there's no proof? 🤔 Please include an image!")
@@ -270,6 +280,7 @@ async def log(ctx):
     current_year = today.year
     today_str = str(today)
     last_logged_date = streak_data["last_logged_date"]
+    print(f"[LOG] Today: {today_str}, Last logged: {last_logged_date}")
 
     # error handling in case last logged date is N/A
     try:
@@ -296,15 +307,18 @@ async def log(ctx):
     user_id = str(ctx.author.id)
     username = ctx.author.display_name
     if check_user_log_today(user_id):
+        print(f"[LOG] User {username} already contributed today, skipping")
         await ctx.send(f"You've already contributed today, {username}! See you tomorrow. 🌟")
         return
 
     # step 5: update user contributions (first time today)
+    print(f"[LOG] Saving user contribution for {username}")
     save_user_data(user_id, username, 1, today_str)
 
     # step 6: prevent updating the streak if it's already logged today
     if last_logged_date == today_str:
-        await ctx.send("Thanks for contributing! The streak’s already logged for today. 🌟")
+        print(f"[LOG] Streak already logged today by someone else, not updating streak count")
+        await ctx.send("Thanks for contributing! The streak's already logged for today. 🌟")
         return
 
     # step 7: check if the streak is broken
@@ -315,9 +329,11 @@ async def log(ctx):
             days_difference = (date.fromisoformat(today_str) - last_logged_date_obj).days
 
             if days_difference > 1:  # streak is broken
+                print(f"[LOG] Streak broken! Days difference: {days_difference}")
                 # check if current streak is the longest
                 current_streak = streak_data["streak_count"]
                 if current_streak > streak_data["longest_streak"]:
+                    print(f"[LOG] New record! {current_streak} > {streak_data['longest_streak']}")
                     streak_data["longest_streak"] = current_streak
                     streak_data["longest_streak_end_date"] = last_logged_date
                 
@@ -331,10 +347,12 @@ async def log(ctx):
 
     # step 8: update the streak for the first log of the day
     if not streak_was_broken: # (skip if already updated due to break)
+        old_count = streak_data["streak_count"]
         streak_data["streak_count"] += 1
         streak_data["last_logged_date"] = today_str
         if streak_data["start_date"] == "N/A" or not streak_data["start_date"]:
             streak_data["start_date"] = today_str  # set start date if missing
+        print(f"[LOG] Incrementing streak: {old_count} -> {streak_data['streak_count']}")
 
     # step 9: check for milestones
     streak_count = streak_data["streak_count"]
@@ -346,6 +364,7 @@ async def log(ctx):
         await ctx.send(f"🎉 **Milestone reached!**\n{milestone_message}")
 
     # step 10: post confirmation message and add emoji reaction
+    print(f"[LOG] Posting confirmation message for streak day {streak_count}")
     confirmation_message = await ctx.send(
         f"✅ Entry logged! The streak is now **{streak_count} days** long! React with ➕ to contribute!"
     )
@@ -356,7 +375,9 @@ async def log(ctx):
     streak_data["log_message_date_yesterday"] = streak_data.get("log_message_date_today")
     streak_data["log_message_id_today"] = confirmation_message.id
     streak_data["log_message_date_today"] = today_str
+    print(f"[LOG] Saving streak data - Message ID: {confirmation_message.id}, Date: {today_str}")
     save_streak_data(streak_data)
+    print(f"[LOG] Streak data saved successfully")
 
 
 ###### MANUALLY RESET LEADERBOARD ##################
